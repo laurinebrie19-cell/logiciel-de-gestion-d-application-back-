@@ -14,7 +14,13 @@ public class EtudiantMapper {
 
     public EtudiantResponseDTO convertToResponseDTO(Etudiant etudiant) {
         if (etudiant == null) return null;
-        return modelMapper.map(etudiant, EtudiantResponseDTO.class);
+        EtudiantResponseDTO dto = modelMapper.map(etudiant, EtudiantResponseDTO.class);
+        if (etudiant.getNiveau() != null) {
+            dto.setNiveau(etudiant.getNiveau().getNom());
+        } else {
+            dto.setNiveau(null);
+        }
+        return dto;
     }
 
     public Etudiant convertToEntity(EtudiantRequestDTO dto) {
@@ -22,4 +28,3 @@ public class EtudiantMapper {
         return modelMapper.map(dto, Etudiant.class);
     }
 }
-

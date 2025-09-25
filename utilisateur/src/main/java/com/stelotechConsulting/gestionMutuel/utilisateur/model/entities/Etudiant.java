@@ -31,11 +31,14 @@ public class Etudiant {
     @Column(nullable = false)
     private String sexe;
 
-    @Column(nullable = false)
-    private String niveau;
+    @Column(nullable = false, unique = true)
+    private String email;
 
-    // Relation optionnelle avec Utilisateur (si besoin)
-    // @OneToOne(fetch = FetchType.LAZY)
-    // private Utilisateur utilisateur;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "niveau_id", nullable = false)
+    private Niveau niveau;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "utilisateur_id")
+    private Utilisateur utilisateur;
 }
-

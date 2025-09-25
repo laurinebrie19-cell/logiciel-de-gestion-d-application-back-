@@ -3,6 +3,7 @@ package com.stelotechConsulting.gestionMutuel.utilisateur.service.impl;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.requestDtos.MatiereRequestDTO;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.responseDtos.MatiereResponseDTO;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Matiere;
+import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Specialite;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.UserMapper.MatiereMapper;
 import com.stelotechConsulting.gestionMutuel.utilisateur.repository.MatiereRepository;
 import com.stelotechConsulting.gestionMutuel.utilisateur.repository.NiveauRepository;
@@ -31,12 +32,19 @@ public class MatiereServiceImpl implements IMatiereService {
     public MatiereResponseDTO createMatiere(MatiereRequestDTO dto) {
         var niveau = niveauRepository.findById(dto.getNiveauId())
             .orElseThrow(() -> new IllegalArgumentException("Niveau avec l'ID " + dto.getNiveauId() + " non trouvé"));
-        var specialite = specialiteRepository.findById(dto.getSpecialiteId())
-            .orElseThrow(() -> new IllegalArgumentException("Spécialité avec l'ID " + dto.getSpecialiteId() + " non trouvée"));
+        // Recherche de la spécialité uniquement si troncCommun == false
+        Specialite specialite = null;
+        if (Boolean.FALSE.equals(dto.getTroncCommun())) {
+            if (dto.getSpecialiteId() == null) {
+                throw new IllegalArgumentException("L'ID de la spécialité est requis pour une matière non tronc commun");
+            }
+            specialite = specialiteRepository.findById(dto.getSpecialiteId())
+                .orElseThrow(() -> new IllegalArgumentException("Spécialité avec l'ID " + dto.getSpecialiteId() + " non trouvée"));
+        }
 
         Matiere matiere = matiereMapper.convertToEntity(dto);
         matiere.setNiveau(niveau);
-        matiere.setSpecialite(specialite);
+        matiere.setSpecialite(specialite); // null si tronc commun
         matiere = matiereRepository.save(matiere);
         return matiereMapper.convertToResponseDTO(matiere);
     }

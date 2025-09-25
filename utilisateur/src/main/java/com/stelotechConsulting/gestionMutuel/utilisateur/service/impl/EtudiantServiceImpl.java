@@ -6,6 +6,13 @@ import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Etudiant
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.UserMapper.EtudiantMapper;
 import com.stelotechConsulting.gestionMutuel.utilisateur.repository.EtudiantRepository;
 import com.stelotechConsulting.gestionMutuel.utilisateur.service.IEtudiantService;
+import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Utilisateur;
+import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Role;
+import com.stelotechConsulting.gestionMutuel.utilisateur.repository.UserRepository;
+import com.stelotechConsulting.gestionMutuel.utilisateur.repository.RoleRepository;
+import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Niveau;
+import com.stelotechConsulting.gestionMutuel.utilisateur.repository.NiveauRepository;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,11 +30,40 @@ public class EtudiantServiceImpl implements IEtudiantService {
     private EtudiantRepository etudiantRepository;
     @Autowired
     private EtudiantMapper etudiantMapper;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    private NiveauRepository niveauRepository;
 
     @Override
     public EtudiantResponseDTO createEtudiant(EtudiantRequestDTO dto) {
+        // Vérifier si un utilisateur existe déjà avec cet email
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new RuntimeException("Un utilisateur avec cet email existe déjà.");
+        }
+        // Création de l'utilisateur associé
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setFirstName(dto.getPrenom());
+        utilisateur.setLastName(dto.getNom());
+        utilisateur.setEmail(dto.getEmail());
+        utilisateur.setPassword(BCrypt.hashpw("Student_Infotech", BCrypt.gensalt()));
+        utilisateur.setRole("Etudiant");
+        utilisateur.setSex(dto.getSexe());
+        utilisateur.setDateOfBirth(dto.getDateNaissance());
+        utilisateur.setStatus("Actif");
+        utilisateur.setValid(true);
+        utilisateur.setAddress(""); // Peut être adapté
+        utilisateur.setPhoneNumber(""); // Peut être adapté
+        // Attribution du rôle
+        Role roleEtudiant = roleRepository.findByRoleName("Etudiant").orElseThrow(() -> new RuntimeException("Rôle ETUDIANT introuvable"));
+        utilisateur.getRoles().add(roleEtudiant);
+        userRepository.save(utilisateur);
+        // Création de l'étudiant
         Etudiant etudiant = etudiantMapper.convertToEntity(dto);
         etudiant.setMatricule(generateMatricule(dto));
+        etudiant.setUtilisateur(utilisateur);
         etudiant = etudiantRepository.save(etudiant);
         return etudiantMapper.convertToResponseDTO(etudiant);
     }
@@ -53,7 +89,9 @@ public class EtudiantServiceImpl implements IEtudiantService {
         etudiant.setPrenom(dto.getPrenom());
         etudiant.setDateNaissance(dto.getDateNaissance());
         etudiant.setSexe(dto.getSexe());
-        etudiant.setNiveau(dto.getNiveau());
+        Niveau niveau = niveauRepository.findById(dto.getNiveauId())
+            .orElseThrow(() -> new RuntimeException("Niveau introuvable pour l'id : " + dto.getNiveauId()));
+        etudiant.setNiveau(niveau);
         etudiant = etudiantRepository.save(etudiant);
         return etudiantMapper.convertToResponseDTO(etudiant);
     }
@@ -79,4 +117,3 @@ public class EtudiantServiceImpl implements IEtudiantService {
         return matricule;
     }
 }
-

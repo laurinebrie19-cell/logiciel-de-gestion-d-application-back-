@@ -106,7 +106,7 @@ public class DataInitializer {
 
                 "REPAYMENT_TRACK_DEBTS", "REPAYMENT_MANAGE_INTEREST", "LOAN_MANAGE","READ_SOLDE_SESSION"
         ));
-        createRoleIfNotExists("Enseignant","Gère les cotisations, emprunts et remboursements", tresorierPerms);
+        createRoleIfNotExists("Enseignant","Gère les notes", tresorierPerms);
 
         // Membre
         List<Permission> membrePerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
@@ -114,7 +114,7 @@ public class DataInitializer {
                 "LOAN_CREATE", "LOAN_READ", "LOAN_CANCEL",
                 "REPAYMENT_READ", "USER_READ","REPAYMENT_CREATE"
         ));
-        createRoleIfNotExists("Etudiant","Peut consulter ses cotisations et faire des demandes de prêt", membrePerms);
+        createRoleIfNotExists("Etudiant","Peut voir ses notes et cours", membrePerms);
 
         // 4. Création du SuperAdmin (code existant)
         if (!userRepository.existsByEmail("superadmin@alinfotech.com")) {

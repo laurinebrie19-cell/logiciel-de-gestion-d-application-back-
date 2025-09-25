@@ -12,5 +12,6 @@ public class EtudiantResponseDTO {
     private String matricule;
     private String sexe;
     private String niveau;
+    private String email;
 }
 
