@@ -10,6 +10,6 @@ public class EmploiDuTempsRequestDTO {
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private Long niveauId;
+    private Long filiereId;
     private List<SeanceRequestDTO> seances;
 }
-

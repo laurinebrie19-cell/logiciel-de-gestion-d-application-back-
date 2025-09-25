@@ -26,6 +26,10 @@ public class EmploiDuTemps {
     @JoinColumn(name = "niveau_id")
     private Niveau niveau;
 
+    @ManyToOne
+    @JoinColumn(name = "filiere_id")
+    private Filiere filiere;
+
     @OneToMany(mappedBy = "emploiDuTemps", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Seance> seances;
 }

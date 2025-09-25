@@ -5,6 +5,7 @@ import java.time.LocalTime;
 
 @Data
 public class SeanceRequestDTO {
+    private Long id;
     private String jour;
     private LocalTime heureDebut;
     private LocalTime heureFin;
@@ -12,4 +13,3 @@ public class SeanceRequestDTO {
     private Long enseignantId;
     private Long salleId;
 }
-

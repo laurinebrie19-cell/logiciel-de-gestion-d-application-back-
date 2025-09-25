@@ -47,4 +47,14 @@ public class EmploiDuTempsController {
         emploiDuTempsService.deleteEmploiDuTemps(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/filiere/{filiereId}")
+    public ResponseEntity<List<EmploiDuTempsResponseDTO>> getEmploisDuTempsByFiliere(@PathVariable Long filiereId) {
+        return ResponseEntity.ok(emploiDuTempsService.getEmploisDuTempsByFiliere(filiereId));
+    }
+
+    @GetMapping("/filiere/{filiereId}/niveau/{niveauId}")
+    public ResponseEntity<List<EmploiDuTempsResponseDTO>> getEmploisDuTempsByFiliereAndNiveau(@PathVariable Long filiereId, @PathVariable Long niveauId) {
+        return ResponseEntity.ok(emploiDuTempsService.getEmploisDuTempsByFiliereAndNiveau(filiereId, niveauId));
+    }
 }

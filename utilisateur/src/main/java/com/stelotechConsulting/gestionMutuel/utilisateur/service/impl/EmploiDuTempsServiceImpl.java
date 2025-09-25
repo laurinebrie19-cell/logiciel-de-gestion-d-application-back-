@@ -24,16 +24,20 @@ public class EmploiDuTempsServiceImpl implements IEmploiDuTempsService {
     @Autowired private MatiereRepository matiereRepository;
     @Autowired private SalleRepository salleRepository;
     @Autowired private UserRepository userRepository;
+    @Autowired private FiliereRepository filiereRepository;
 
     @Override
     public EmploiDuTempsResponseDTO createEmploiDuTemps(EmploiDuTempsRequestDTO dto) {
         Niveau niveau = niveauRepository.findById(dto.getNiveauId())
             .orElseThrow(() -> new IllegalArgumentException("Niveau non trouvé"));
+        Filiere filiere = filiereRepository.findById(dto.getFiliereId())
+            .orElseThrow(() -> new IllegalArgumentException("Filière non trouvée"));
         EmploiDuTemps emploi = EmploiDuTemps.builder()
             .titre(dto.getTitre())
             .dateDebut(dto.getDateDebut())
             .dateFin(dto.getDateFin())
             .niveau(niveau)
+            .filiere(filiere)
             .build();
         List<Seance> seances = new ArrayList<>();
         if (dto.getSeances() != null) {
@@ -89,19 +93,35 @@ public class EmploiDuTempsServiceImpl implements IEmploiDuTempsService {
     }
 
     @Override
+    public List<EmploiDuTempsResponseDTO> getEmploisDuTempsByFiliere(Long filiereId) {
+        return emploiDuTempsRepository.findByFiliereId(filiereId).stream()
+            .map(this::toResponseDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EmploiDuTempsResponseDTO> getEmploisDuTempsByFiliereAndNiveau(Long filiereId, Long niveauId) {
+        return emploiDuTempsRepository.findByFiliereIdAndNiveauId(filiereId, niveauId).stream()
+            .map(this::toResponseDTO)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public EmploiDuTempsResponseDTO updateEmploiDuTemps(Long id, EmploiDuTempsRequestDTO dto) {
         EmploiDuTemps emploi = emploiDuTempsRepository.findById(id).orElse(null);
         if (emploi == null) return null;
         emploi.setTitre(dto.getTitre());
         emploi.setDateDebut(dto.getDateDebut());
         emploi.setDateFin(dto.getDateFin());
-        // Pour la mise à jour des séances, on peut remplacer la liste
+        // Reconstruire la liste des séances à partir du DTO
         List<Seance> seances = new ArrayList<>();
         if (dto.getSeances() != null) {
             for (SeanceRequestDTO sDto : dto.getSeances()) {
                 // Vérification chevauchement enseignant
                 List<Seance> enseignantSeances = seanceRepository.findByEnseignantIdAndJour(sDto.getEnseignantId(), sDto.getJour());
                 for (Seance s : enseignantSeances) {
+                    // Ignorer la séance en cours de modification
+                    if (sDto.getId() != null && s.getId().equals(sDto.getId())) continue;
                     if (chevauche(s.getHeureDebut(), s.getHeureFin(), sDto.getHeureDebut(), sDto.getHeureFin())) {
                         throw new IllegalArgumentException("L'enseignant est déjà occupé à cette heure");
                     }
@@ -109,6 +129,8 @@ public class EmploiDuTempsServiceImpl implements IEmploiDuTempsService {
                 // Vérification chevauchement salle
                 List<Seance> salleSeances = seanceRepository.findBySalleIdAndJour(sDto.getSalleId(), sDto.getJour());
                 for (Seance s : salleSeances) {
+                    // Ignorer la séance en cours de modification
+                    if (sDto.getId() != null && s.getId().equals(sDto.getId())) continue;
                     if (chevauche(s.getHeureDebut(), s.getHeureFin(), sDto.getHeureDebut(), sDto.getHeureFin())) {
                         throw new IllegalArgumentException("La salle est déjà occupée à cette heure");
                     }
@@ -120,6 +142,7 @@ public class EmploiDuTempsServiceImpl implements IEmploiDuTempsService {
                 Utilisateur enseignant = userRepository.findById(sDto.getEnseignantId())
                     .orElseThrow(() -> new IllegalArgumentException("Enseignant non trouvé"));
                 Seance seance = Seance.builder()
+                    .id(sDto.getId())
                     .jour(sDto.getJour())
                     .heureDebut(sDto.getHeureDebut())
                     .heureFin(sDto.getHeureFin())
@@ -131,7 +154,9 @@ public class EmploiDuTempsServiceImpl implements IEmploiDuTempsService {
                 seances.add(seance);
             }
         }
-        emploi.setSeances(seances);
+        // Pour la mise à jour des séances, on doit conserver la référence de la collection
+        emploi.getSeances().clear();
+        emploi.getSeances().addAll(seances);
         emploi = emploiDuTempsRepository.save(emploi);
         return toResponseDTO(emploi);
     }
@@ -159,6 +184,7 @@ public class EmploiDuTempsServiceImpl implements IEmploiDuTempsService {
         dto.setDateDebut(emploi.getDateDebut());
         dto.setDateFin(emploi.getDateFin());
         dto.setNiveauId(emploi.getNiveau().getId());
+        dto.setFiliereId(emploi.getFiliere() != null ? emploi.getFiliere().getId() : null);
         if (emploi.getSeances() != null) {
             List<SeanceResponseDTO> seanceDtos = emploi.getSeances().stream().map(s -> {
                 SeanceResponseDTO sdto = new SeanceResponseDTO();

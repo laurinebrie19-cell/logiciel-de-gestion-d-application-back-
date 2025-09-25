@@ -11,6 +11,6 @@ public class EmploiDuTempsResponseDTO {
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private Long niveauId;
+    private Long filiereId;
     private List<SeanceResponseDTO> seances;
 }
-
