@@ -44,5 +44,9 @@ public class EtudiantController {
         etudiantService.deleteEtudiant(id);
         return ResponseEntity.noContent().build();
     }
-}
 
+    @GetMapping("/niveau/{niveauId}")
+    public ResponseEntity<List<EtudiantResponseDTO>> getEtudiantsByNiveau(@PathVariable Long niveauId) {
+        return ResponseEntity.ok(etudiantService.getEtudiantsByNiveau(niveauId));
+    }
+}

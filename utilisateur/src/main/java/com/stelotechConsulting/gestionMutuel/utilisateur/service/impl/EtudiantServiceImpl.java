@@ -101,6 +101,13 @@ public class EtudiantServiceImpl implements IEtudiantService {
         etudiantRepository.deleteById(id);
     }
 
+    @Override
+    public List<EtudiantResponseDTO> getEtudiantsByNiveau(Long niveauId) {
+        return etudiantRepository.findByNiveau_Id(niveauId).stream()
+            .map(etudiantMapper::convertToResponseDTO)
+            .collect(java.util.stream.Collectors.toList());
+    }
+
     private String generateMatricule(EtudiantRequestDTO dto) {
         String nom = dto.getNom();
         String prefix = nom.length() >= 2 ? nom.substring(0, 2).toUpperCase() : nom.toUpperCase();

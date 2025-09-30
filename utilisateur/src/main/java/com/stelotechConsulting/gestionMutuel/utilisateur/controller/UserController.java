@@ -8,6 +8,7 @@ import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.requestDtos.
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.requestDtos.ResetPasswordRequest;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.requestDtos.UserRequestDTO;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.responseDtos.UserResponseDTO;
+import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.responseDtos.NiveauResponseDTO;
 
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Utilisateur;
 import com.stelotechConsulting.gestionMutuel.utilisateur.service.UserService;
@@ -164,4 +165,9 @@ public ResponseEntity<UserResponseDTO> resetPassword(@RequestBody ForcerPassword
 }
 
 
+    @GetMapping("/{enseignantId}/niveaux")
+    public ResponseEntity<List<NiveauResponseDTO>> getNiveauxByEnseignant(@PathVariable Long enseignantId) {
+        List<NiveauResponseDTO> niveaux = userService.getNiveauxByEnseignant(enseignantId);
+        return ResponseEntity.ok(niveaux);
+    }
 }

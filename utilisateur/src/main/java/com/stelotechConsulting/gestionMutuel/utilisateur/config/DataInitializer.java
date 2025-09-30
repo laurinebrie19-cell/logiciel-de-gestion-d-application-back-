@@ -32,34 +32,44 @@ public class DataInitializer {
         // 1. Création des permissions de base
         List<String> permissionsList = Arrays.asList(
                 // Gestion des Utilisateurs
-                "USER_CREATE", "USER_READ", "USER_UPDATE", "USER_DELETE", "USER_MANAGE_ROLES","ADD_MEMBRE_BUREAU",
+                "USER_CREATE", "USER_READ", "USER_UPDATE", "USER_DELETE", "USER_MANAGE_ROLES",
 
-                // Gestion des Sessions
-                "SESSION_CREATE", "SESSION_READ", "SESSION_UPDATE", "SESSION_DELETE",
-                "SESSION_CLOSE", "SESSION_MANAGE_BALANCE" ,"READ_SOLDE_SESSION",
+                // Gestion des Rôles
+                "ROLE_CREATE", "ROLE_READ", "ROLE_UPDATE", "ROLE_DELETE",
 
-                // Gestion des Périodes
-                "PERIOD_CREATE", "PERIOD_READ", "PERIOD_UPDATE", "PERIOD_DELETE",
-                "PERIOD_TERMINATE", "PERIOD_MANAGE_STATUS",
+                // Gestion des Permissions
+                "PERMISSION_READ",
 
-                // Gestion des Cotisations
-                "CONTRIBUTION_CREATE", "CONTRIBUTION_READ", "CONTRIBUTION_UPDATE",
-                "CONTRIBUTION_DELETE", "CONTRIBUTION_REPORT",
+                // Gestion des Filières
+                "FILIERE_CREATE", "FILIERE_READ", "FILIERE_UPDATE", "FILIERE_DELETE",
 
-                // permissions pour les statistiques
-                "STATISTICS_VIEW", "STATISTICS_EXPORT",
+                // Gestion des Niveaux
+                "NIVEAU_CREATE", "NIVEAU_READ", "NIVEAU_UPDATE", "NIVEAU_DELETE",
 
-                // Gestion des Emprunts
-                "LOAN_CREATE", "LOAN_READ", "LOAN_UPDATE", "LOAN_DELETE",
-                "LOAN_APPROVE", "LOAN_REJECT", "LOAN_CANCEL", "LOAN_MANAGE",
+                // Gestion des Matières
+                "MATIERE_CREATE", "MATIERE_READ", "MATIERE_UPDATE", "MATIERE_DELETE",
 
-                // Gestion des Remboursements
-                "REPAYMENT_CREATE", "REPAYMENT_READ", "REPAYMENT_MANAGE",
-                "REPAYMENT_TRACK_DEBTS", "REPAYMENT_MANAGE_INTEREST",
+                // Gestion des Emplois du temps
+                "EMPLOI_CREATE", "EMPLOI_READ", "EMPLOI_UPDATE", "EMPLOI_DELETE",
 
-                "UPDATE_MODELE_EN_TETE", // Pour paramétrer le modèle en tête
-                "BUREAU_MANAGE", // pour créer les fonction bureau
-                "ADD_MEMBRE_BUREAU"
+                // Gestion des Salles
+                "SALLE_CREATE", "SALLE_READ", "SALLE_UPDATE", "SALLE_DELETE",
+
+                // Gestion des Annonces
+                "ANNONCE_CREATE", "ANNONCE_READ", "ANNONCE_UPDATE", "ANNONCE_DELETE",
+
+                // Gestion des Catégories et Types d'annonces
+                "CATEGORIE_ANNONCE_CREATE", "CATEGORIE_ANNONCE_READ", "CATEGORIE_ANNONCE_UPDATE", "CATEGORIE_ANNONCE_DELETE",
+                "TYPE_ANNONCE_CREATE", "TYPE_ANNONCE_READ", "TYPE_ANNONCE_UPDATE", "TYPE_ANNONCE_DELETE",
+
+                // Gestion des Fonctions de bureau
+                "FONCTION_BUREAU_CREATE", "FONCTION_BUREAU_READ", "FONCTION_BUREAU_UPDATE", "FONCTION_BUREAU_DELETE",
+
+                // Gestion des Notifications
+                "NOTIFICATION_READ", "NOTIFICATION_UPDATE",
+
+                // Gestion des Étudiants
+                "ETUDIANT_CREATE", "ETUDIANT_READ", "ETUDIANT_UPDATE", "ETUDIANT_DELETE"
         );
 
         // 2. Sauvegarde des permissions
@@ -76,45 +86,20 @@ public class DataInitializer {
         List<Permission> superAdminPerms = permissionRepository.findAll();
         createRoleIfNotExists("SuperAdmin" ,"A tous les droits sur l’application", superAdminPerms);
 
-        // Admin
-        List<Permission> adminPerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
-                "USER_READ","USER_CREATE", "USER_UPDATE", "USER_MANAGE_ROLES",
-                "SESSION_CREATE", "SESSION_READ", "SESSION_UPDATE", "SESSION_CLOSE",
-                "PERIOD_CREATE", "PERIOD_READ", "PERIOD_UPDATE", "PERIOD_DELETE",
-                "PERIOD_TERMINATE", "PERIOD_MANAGE_STATUS",
-                "CONTRIBUTION_READ", "CONTRIBUTION_REPORT",
-                "LOAN_APPROVE", "LOAN_REJECT", "LOAN_READ","LOAN_CREATE",
-                "STATISTICS_VIEW", "STATISTICS_EXPORT",
-                "REPAYMENT_READ", "LOAN_MANAGE",
-                "CONTRIBUTION_CREATE", "CONTRIBUTION_READ", "CONTRIBUTION_UPDATE","CONTRIBUTION_REPORT","READ_SOLDE_SESSION",
-                "UPDATE_MODELE_EN_TETE","BUREAU_MANAGE","ADD_MEMBRE_BUREAU"
+        // Admin (mêmes droits que SuperAdmin)
+        createRoleIfNotExists("Admin","Gère tout l'établissement", superAdminPerms);
+
+        // Enseignant
+        List<Permission> enseignantPerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
+                "USER_READ", "USER_UPDATE", "MATIERE_READ", "MATIERE_UPDATE", "EMPLOI_READ", "EMPLOI_UPDATE", "ANNONCE_READ"
         ));
-        createRoleIfNotExists("Admin","Gère les utilisateurs, les sessions et les rapports", adminPerms);
+        createRoleIfNotExists("Enseignant","Gère ses cours, notes et emploi du temps", enseignantPerms);
 
-
-
-
-        // Trésorier
-        List<Permission> tresorierPerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
-                "USER_READ","USER_CREATE", "USER_UPDATE",
-                "CONTRIBUTION_CREATE", "CONTRIBUTION_READ", "CONTRIBUTION_UPDATE","CONTRIBUTION_REPORT",
-                "SESSION_CREATE", "SESSION_READ","SESSION_UPDATE", "SESSION_CLOSE", "SESSION_MANAGE_BALANCE",
-                "PERIOD_CREATE", "PERIOD_READ", "PERIOD_UPDATE", "PERIOD_MANAGE_STATUS",
-                "LOAN_READ", "LOAN_APPROVE", "LOAN_REJECT","LOAN_CREATE",
-                "STATISTICS_VIEW", "STATISTICS_EXPORT",
-                "REPAYMENT_CREATE", "REPAYMENT_READ", "REPAYMENT_MANAGE",
-
-                "REPAYMENT_TRACK_DEBTS", "REPAYMENT_MANAGE_INTEREST", "LOAN_MANAGE","READ_SOLDE_SESSION"
+        // Etudiant
+        List<Permission> etudiantPerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
+                "USER_READ", "ETUDIANT_READ", "EMPLOI_READ", "ANNONCE_READ"
         ));
-        createRoleIfNotExists("Enseignant","Gère les notes", tresorierPerms);
-
-        // Membre
-        List<Permission> membrePerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
-                "CONTRIBUTION_READ","CONTRIBUTION_CREATE",
-                "LOAN_CREATE", "LOAN_READ", "LOAN_CANCEL",
-                "REPAYMENT_READ", "USER_READ","REPAYMENT_CREATE"
-        ));
-        createRoleIfNotExists("Etudiant","Peut voir ses notes et cours", membrePerms);
+        createRoleIfNotExists("Etudiant","Peut voir ses notes, emploi du temps et annonces", etudiantPerms);
 
         // 4. Création du SuperAdmin (code existant)
         if (!userRepository.existsByEmail("superadmin@alinfotech.com")) {
@@ -124,7 +109,7 @@ public class DataInitializer {
             superAdmin.setLastName("Admin");
             superAdmin.setEmail("superadmin@alinfotech.com");
             superAdmin.setPassword(BCrypt.hashpw("SuperAdmin123", BCrypt.gensalt()));
-            superAdmin.setAddress("123 Rue Principale");
+            superAdmin.setAddress("Lélé, Nkongsamba");
             superAdmin.setRoles(Arrays.asList(superAdminRole));
             superAdmin.setRole("SuperAdmin");
             superAdmin.setSex("M");

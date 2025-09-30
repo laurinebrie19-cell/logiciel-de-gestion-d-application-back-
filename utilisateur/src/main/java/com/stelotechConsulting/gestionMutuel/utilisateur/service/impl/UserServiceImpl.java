@@ -5,23 +5,21 @@ import com.stelotechConsulting.gestionMutuel.utilisateur.exceptions.UserNotFound
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.UserMapper.UserMapper;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.requestDtos.UserRequestDTO;
 import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.responseDtos.UserResponseDTO;
-import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.FonctionBureau;
-import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Permission;
-import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Role;
-import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.Utilisateur;
+import com.stelotechConsulting.gestionMutuel.utilisateur.model.dtos.responseDtos.NiveauResponseDTO;
+import com.stelotechConsulting.gestionMutuel.utilisateur.model.entities.*;
 import com.stelotechConsulting.gestionMutuel.utilisateur.repository.FonctionBureauRepository;
 import com.stelotechConsulting.gestionMutuel.utilisateur.repository.RoleRepository;
+import com.stelotechConsulting.gestionMutuel.utilisateur.repository.SeanceRepository;
 import com.stelotechConsulting.gestionMutuel.utilisateur.repository.UserRepository;
-
 import com.stelotechConsulting.gestionMutuel.utilisateur.service.EmailService;
 import com.stelotechConsulting.gestionMutuel.utilisateur.service.UserService;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -48,6 +46,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private FonctionBureauRepository fonctionBureauRepository;
+
+    @Autowired
+    private SeanceRepository seanceRepository;
 
 
 
@@ -82,30 +83,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO createUser(UserRequestDTO userRequestDTO) {
-        // Vérifier si l'utilisateur existe déjà
+        // Vérification si un utilisateur existe déjà, qu'il soit actif ou non
         Optional<Utilisateur> existingUser = userRepository.findByEmail(userRequestDTO.getEmail());
 
-        // Vérifier l'acteur si fonction du bureau est assignée
-        if (userRequestDTO.getFonctionBureauId() != null) {
-            Utilisateur actor = userRepository.findByEmail(userRequestDTO.getActorEmail())
-                    .orElseThrow(() -> new RuntimeException("Acteur non trouvé pour l’habilitation"));
-
-            // Vérifier que l'acteur a la permission ADD_MEMBRE_BUREAU
-            List<String> actorPermissions = actor.getRoles().stream()
-                    .flatMap(role -> role.getPermissions().stream())
-                    .map(Permission::getPermissionName)  // <-- extraire le nom
-                    .distinct()
-                    .toList();
-
-
-            if (!actorPermissions.contains("ADD_MEMBRE_BUREAU")) {
-                throw new RuntimeException("Acteur non habilité à créer un utilisateur du bureau");
-            }
-        }
-
-        Utilisateur utilisateur;
         if (existingUser.isPresent()) {
-            utilisateur = existingUser.get();
+            Utilisateur utilisateur = existingUser.get();
 
             if (utilisateur.isValid() && "Actif".equals(utilisateur.getStatus())) {
                 throw new IllegalArgumentException("L'adresse email est déjà utilisée par un utilisateur actif.");
@@ -117,54 +99,43 @@ public class UserServiceImpl implements UserService {
             utilisateur.setRole(userRequestDTO.getRole());
             utilisateur.setPhoneNumber(userRequestDTO.getPhoneNumber());
             utilisateur.setMustChangePassword(true);
-            utilisateur.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
+            utilisateur.setPassword(userRequestDTO.getPassword());
             utilisateur.setAddress(userRequestDTO.getAddress());
             utilisateur.setSex(userRequestDTO.getSex());
             utilisateur.setDateOfBirth(userRequestDTO.getDateOfBirth());
             utilisateur.setStatus("Actif");
-            utilisateur.setValid(true);
+            utilisateur.setValid(true); // <-- Réactiver l'utilisateur
 
-            // Affecter les rôles si fournis
-            if (userRequestDTO.getRoleIds() != null && !userRequestDTO.getRoleIds().isEmpty()) {
-                List<Role> roles = roleRepository.findAllById(userRequestDTO.getRoleIds());
-                utilisateur.setRoles(roles);
-            }
+            List<Role> roles = roleRepository.findAllById(userRequestDTO.getRoleIds());
+            utilisateur.setRoles(roles);
 
-        } else {
-            // Création normale d'un nouvel utilisateur
-            utilisateur = new Utilisateur();
-            utilisateur.setFirstName(userRequestDTO.getFirstName());
-            utilisateur.setLastName(userRequestDTO.getLastName());
-            utilisateur.setRole(userRequestDTO.getRole());
-            utilisateur.setPhoneNumber(userRequestDTO.getPhoneNumber());
-            utilisateur.setEmail(userRequestDTO.getEmail());
-            utilisateur.setMustChangePassword(true);
-            utilisateur.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
-            utilisateur.setAddress(userRequestDTO.getAddress());
-            utilisateur.setSex(userRequestDTO.getSex());
-            utilisateur.setDateOfBirth(userRequestDTO.getDateOfBirth());
-            utilisateur.setStatus("Actif");
-            utilisateur.setValid(true);
-
-            if (userRequestDTO.getRoleIds() != null && !userRequestDTO.getRoleIds().isEmpty()) {
-                List<Role> roles = roleRepository.findAllById(userRequestDTO.getRoleIds());
-                utilisateur.setRoles(roles);
-            }
+            Utilisateur savedUser = userRepository.save(utilisateur);
+            return convertToUserResponseDTO(savedUser);
         }
 
-        // Affecter la fonction du bureau si fournie
-        if (userRequestDTO.getFonctionBureauId() != null) {
-            FonctionBureau fonctionBureau = fonctionBureauRepository
-                    .findById(userRequestDTO.getFonctionBureauId())
-                    .orElseThrow(() -> new RuntimeException("FonctionBureau not found"));
-            utilisateur.setFonctionBureau(fonctionBureau);
-        }
+        // Sinon, création normale
+        Utilisateur newUser = new Utilisateur();
+        newUser.setFirstName(userRequestDTO.getFirstName());
+        newUser.setLastName(userRequestDTO.getLastName());
+        newUser.setRole(userRequestDTO.getRole());
+        newUser.setPhoneNumber(userRequestDTO.getPhoneNumber());
+        newUser.setEmail(userRequestDTO.getEmail());
+        newUser.setMustChangePassword(true);
+        newUser.setPassword(userRequestDTO.getPassword());
+        newUser.setAddress(userRequestDTO.getAddress());
+        newUser.setSex(userRequestDTO.getSex());
+        newUser.setDateOfBirth(userRequestDTO.getDateOfBirth());
+        newUser.setStatus("Actif");
+        newUser.setValid(true);
 
+        List<Role> roles = roleRepository.findAllById(userRequestDTO.getRoleIds());
+        newUser.setRoles(roles);
 
-        Utilisateur savedUser = userRepository.save(utilisateur);
-
+        Utilisateur savedUser = userRepository.save(newUser);
         return convertToUserResponseDTO(savedUser);
     }
+
+
 
     @Override
     public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
@@ -217,19 +188,14 @@ public class UserServiceImpl implements UserService {
             utilisateur.setStatus(userRequestDTO.getStatus());
         }
 
-        // Mettre à jour la fonction au bureau si fournie
-        if (userRequestDTO.getFonctionBureauId() != null) {
-            FonctionBureau fonctionBureau = fonctionBureauRepository
-                    .findById(userRequestDTO.getFonctionBureauId())
-                    .orElseThrow(() -> new RuntimeException("FonctionBureau not found"));
-            utilisateur.setFonctionBureau(fonctionBureau);
-        }
-
-
         // Sauvegarder l'utilisateur mis à jour
         Utilisateur updatedUser = userRepository.save(utilisateur);
         return convertToUserResponseDTO(updatedUser);
     }
+
+
+
+
 
 
     @Override
@@ -429,6 +395,25 @@ public class UserServiceImpl implements UserService {
 
         // Étape 6 : Retourner les informations de l'utilisateur mises à jour
         return userMapper.convertToResponseDTO(user);
+    }
+
+    @Override
+    public List<NiveauResponseDTO> getNiveauxByEnseignant(Long enseignantId) {
+        List<Seance> seances = seanceRepository.findByEnseignantId(enseignantId);
+        HashSet<Long> niveauIds = new HashSet<>();
+        List<NiveauResponseDTO> niveaux = seances.stream()
+                .map(Seance::getMatiere)
+                .filter(matiere -> matiere != null && matiere.getNiveau() != null)
+                .map(Matiere::getNiveau)
+                .filter(niveau -> niveauIds.add(niveau.getId())) // évite les doublons
+                .map(niveau -> {
+                    NiveauResponseDTO dto = new NiveauResponseDTO();
+                    dto.setId(niveau.getId());
+                    dto.setNom(niveau.getNom());
+                    return dto;
+                })
+                .toList();
+        return niveaux;
     }
 
 }

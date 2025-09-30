@@ -10,5 +10,5 @@ public interface IEtudiantService {
     List<EtudiantResponseDTO> getAllEtudiants();
     EtudiantResponseDTO updateEtudiant(Long id, EtudiantRequestDTO dto);
     void deleteEtudiant(Long id);
+    List<EtudiantResponseDTO> getEtudiantsByNiveau(Long niveauId);
 }
-

@@ -7,5 +7,6 @@ import java.util.List;
 public interface SeanceRepository extends JpaRepository<Seance, Long> {
     List<Seance> findByEnseignantIdAndJour(Long enseignantId, String jour);
     List<Seance> findBySalleIdAndJour(Long salleId, String jour);
+    List<Seance> findByEnseignantId(Long enseignantId);
+    List<Seance> findByJour(String jour);
 }
-
