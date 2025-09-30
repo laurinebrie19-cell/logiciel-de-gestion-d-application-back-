@@ -69,7 +69,10 @@ public class DataInitializer {
                 "NOTIFICATION_READ", "NOTIFICATION_UPDATE",
 
                 // Gestion des Étudiants
-                "ETUDIANT_CREATE", "ETUDIANT_READ", "ETUDIANT_UPDATE", "ETUDIANT_DELETE"
+                "ETUDIANT_CREATE", "ETUDIANT_READ", "ETUDIANT_UPDATE", "ETUDIANT_DELETE",
+                // Gestion des notes
+                "NOTE_CREATE", "NOTE_READ", "NOTE_READ_ALL"
+
         );
 
         // 2. Sauvegarde des permissions
@@ -91,13 +94,13 @@ public class DataInitializer {
 
         // Enseignant
         List<Permission> enseignantPerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
-                "USER_READ", "USER_UPDATE", "MATIERE_READ", "MATIERE_UPDATE", "EMPLOI_READ", "EMPLOI_UPDATE", "ANNONCE_READ"
+                "USER_READ", "USER_UPDATE", "MATIERE_READ", "MATIERE_UPDATE", "EMPLOI_READ", "EMPLOI_UPDATE", "ANNONCE_READ", "NOTE_CREATE", "NOTE_READ"
         ));
         createRoleIfNotExists("Enseignant","Gère ses cours, notes et emploi du temps", enseignantPerms);
 
         // Etudiant
         List<Permission> etudiantPerms = permissionRepository.findAllByPermissionNameIn(Arrays.asList(
-                "USER_READ", "ETUDIANT_READ", "EMPLOI_READ", "ANNONCE_READ"
+                "USER_READ", "ETUDIANT_READ", "EMPLOI_READ", "ANNONCE_READ", "NOTE_READ"
         ));
         createRoleIfNotExists("Etudiant","Peut voir ses notes, emploi du temps et annonces", etudiantPerms);
 
