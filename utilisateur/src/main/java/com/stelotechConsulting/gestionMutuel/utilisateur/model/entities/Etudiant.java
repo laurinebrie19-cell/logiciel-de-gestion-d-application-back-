@@ -31,14 +31,14 @@ public class Etudiant {
     @Column(nullable = false)
     private String sexe;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "niveau_id", nullable = false)
     private Niveau niveau;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "utilisateur_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", unique = true)
     private Utilisateur utilisateur;
 }

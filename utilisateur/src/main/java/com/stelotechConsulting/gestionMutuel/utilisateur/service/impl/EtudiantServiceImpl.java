@@ -43,6 +43,11 @@ public class EtudiantServiceImpl implements IEtudiantService {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new RuntimeException("Un utilisateur avec cet email existe déjà.");
         }
+
+        // Vérifier et récupérer le niveau
+        Niveau niveau = niveauRepository.findById(dto.getNiveauId())
+            .orElseThrow(() -> new RuntimeException("Niveau introuvable pour l'id : " + dto.getNiveauId()));
+
         // Création de l'utilisateur associé
         Utilisateur utilisateur = new Utilisateur();
         utilisateur.setFirstName(dto.getPrenom());
@@ -54,16 +59,26 @@ public class EtudiantServiceImpl implements IEtudiantService {
         utilisateur.setDateOfBirth(dto.getDateNaissance());
         utilisateur.setStatus("Actif");
         utilisateur.setValid(true);
-        utilisateur.setAddress(""); // Peut être adapté
-        utilisateur.setPhoneNumber(""); // Peut être adapté
+        utilisateur.setAddress("");
+        utilisateur.setPhoneNumber("");
+
         // Attribution du rôle
-        Role roleEtudiant = roleRepository.findByRoleName("Etudiant").orElseThrow(() -> new RuntimeException("Rôle ETUDIANT introuvable"));
+        Role roleEtudiant = roleRepository.findByRoleName("Etudiant")
+            .orElseThrow(() -> new RuntimeException("Rôle ETUDIANT introuvable"));
         utilisateur.getRoles().add(roleEtudiant);
-        userRepository.save(utilisateur);
-        // Création de l'étudiant
-        Etudiant etudiant = etudiantMapper.convertToEntity(dto);
+        utilisateur = userRepository.save(utilisateur);  // Sauvegarde et récupération de l'utilisateur avec son ID
+
+        // Création de l'étudiant avec mapping manuel pour éviter les problèmes de ModelMapper
+        Etudiant etudiant = new Etudiant();
+        etudiant.setNom(dto.getNom());
+        etudiant.setPrenom(dto.getPrenom());
+        etudiant.setDateNaissance(dto.getDateNaissance());
+        etudiant.setSexe(dto.getSexe());
+        etudiant.setEmail(dto.getEmail());
         etudiant.setMatricule(generateMatricule(dto));
+        etudiant.setNiveau(niveau);
         etudiant.setUtilisateur(utilisateur);
+
         etudiant = etudiantRepository.save(etudiant);
         return etudiantMapper.convertToResponseDTO(etudiant);
     }

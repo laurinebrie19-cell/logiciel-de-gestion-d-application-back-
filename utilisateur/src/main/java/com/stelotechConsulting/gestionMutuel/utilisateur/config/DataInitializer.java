@@ -71,7 +71,7 @@ public class DataInitializer {
                 // Gestion des Étudiants
                 "ETUDIANT_CREATE", "ETUDIANT_READ", "ETUDIANT_UPDATE", "ETUDIANT_DELETE",
                 // Gestion des notes
-                "NOTE_CREATE", "NOTE_READ", "NOTE_READ_ALL"
+                "NOTE_CREATE", "NOTE_READ", "NOTE_READ_ALL", "NOTE_UPDATE", "NOTE_DELETE"
 
         );
 
